@@ -2,6 +2,9 @@
 # Import settings from config file
 source settings.conf
 
+# Export AWS CLI path
+export PATH=~/.local/bin:$PATH
+
 # Get date for tagging backups.
 suffix=$(date +"%Y%m%d")
 
@@ -19,7 +22,7 @@ if [ ! -d "$mysql_output" ]; then
 fi
 
 # Dump all databeses and create arcives.
-# We skip databases with names starting with an underscrore. Also, we prefer not to dump "information_schema".
+# Skip databases with names starting with an underscrore. Also, prefer not to dump "information_schema".
 databases=`mysql --user=$mysql_user --password=$mysql_password -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
 echo $? >> $scriptpath/$exitcodes
 for db in $databases; do
@@ -38,30 +41,30 @@ for db in $databases; do
 done
 rm $mysql_output/*.sql $mysql_output/*.tar
 
-# Sync all assets with remote
+# Sync all local assets with remote.
 echo "========================================" >> $scriptpath/$logfile
 echo "Synchronizing databases" >> $scriptpath/$logfile
 echo "========================================" >> $scriptpath/$logfile
 if [ -z ${s3_sync_exclude+x} ]; then
-  aws s3 sync $mysql_output s3://$s3_dbs_bucket $s3_sync_params >> $scriptpath/$logfile
+  aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
 else
-  aws s3 sync $mysql_output s3://$s3_dbs_bucket $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
+  aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
 fi
 echo $? >> $scriptpath/$exitcodes
 echo "========================================" >> $scriptpath/$logfile
 echo "Synchronizing virtual hosts" >> $scriptpath/$logfile
 echo "========================================" >> $scriptpath/$logfile
 if [ -z ${s3_sync_exclude+x} ]; then
-  aws s3 sync $root_vhosts s3://$s3_vhosts_bucket $s3_sync_params >> $scriptpath/$logfile
+  aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params >> $scriptpath/$logfile
 else
-  aws s3 sync $root_vhosts s3://$s3_vhosts_bucket $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
+  aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
 fi
 echo $? >> $scriptpath/$exitcodes
 
-# Check if any errors happened during creating and synchronizing backups
+# Check if any errors happened during creating and synchronizing backups.
 errorcount="$(grep -Ev '(^0|^$)' $scriptpath/$exitcodes|wc -l)"
 
-# Send the report
+# Send the report.
 report=$(openssl enc -base64 -A -in $scriptpath/$logfile)
 if [[ $errorcount -eq 0 ]]; then
   errorstatus="without any errors"
@@ -75,8 +78,8 @@ echo "{\"Data\": \"X-SES-SOURCE-ARN: $mail_header_source_arn\nX-SES-FROM-ARN: $m
 
 aws ses send-raw-email --raw-message file://$scriptpath/mail.json
 
-# Set trap for cleanup
-# function cleanup {
-#   rm $scriptpath/$logfile $scriptpath/$exitcodes $scriptpath/mail.json
-# }
-# trap cleanup EXIT
+Set trap for cleanup
+function cleanup {
+  rm $scriptpath/$logfile $scriptpath/$exitcodes $scriptpath/mail.json
+}
+trap cleanup EXIT
