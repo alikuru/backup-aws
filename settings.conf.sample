@@ -1,0 +1,21 @@
+# Mail settings
+mail_mail_header_source_arn="arn:aws:ses:us-east-1:999999999999:identity/domain.tld"
+mail_header_from_arn="arn:aws:ses:us-east-1:999999999999:identity/domain.tld"
+mail_header_return_arn="arn:aws:ses:us-east-1:999999999999:identity/domain.tld"
+mail_from="Web Server <server@domain.tld>"
+mail_to="System Administrator <admin@domain.tld>"
+mail_return="Web Server <server@domain.tld>"
+
+# MySQL settings
+mysql_user="root"
+mysql_password="my-very-strong-password"
+mysql_output="./dbs"
+
+# Root directory of vhosts
+root_vhosts="/path/to/vhosts/root/"
+
+# s3 settings
+s3_sync_params="--no-follow-symlinks --exact-timestamps --delete --dryrun"
+s3_vhosts_bucket="my-vhosts-bucket"
+s3_dbs_bucket="my-dbs-bucket"
+s3_sync_exclude="logs-aws/*"
