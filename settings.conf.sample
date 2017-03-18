@@ -16,6 +16,6 @@ root_vhosts="/path/to/vhosts/root/"
 
 # s3 settings
 s3_sync_params="--no-follow-symlinks --exact-timestamps --delete --dryrun"
-s3_vhosts_bucket="my-vhosts-bucket"
-s3_dbs_bucket="my-dbs-bucket"
+s3_bucket_vhosts="my-vhosts-bucket"
+s3_bucket_dbs="my-dbs-bucket"
 s3_sync_exclude="logs-aws/*"
