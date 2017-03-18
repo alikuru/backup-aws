@@ -13,7 +13,7 @@ scriptpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 logfile="backup-$(hostname)-$suffix.log"
 exitcodes="exit-codes.log"
 
-# If it doesn't exist, create the directory for storing database dumps
+# If it doesn't exist, create the directory for storing database dumps as defined in settings.
 if [ ! -d "$mysql_output" ]; then
   mkdir -p $mysql_output
 fi
@@ -43,9 +43,9 @@ echo "========================================" >> $scriptpath/$logfile
 echo "Synchronizing databases" >> $scriptpath/$logfile
 echo "========================================" >> $scriptpath/$logfile
 if [ -z ${s3_sync_exclude+x} ]; then
-  aws s3 sync $root_vhosts s3://$s3_dbs_bucket $s3_sync_params >> $scriptpath/$logfile
+  aws s3 sync $mysql_output s3://$s3_dbs_bucket $s3_sync_params >> $scriptpath/$logfile
 else
-  aws s3 sync $root_vhosts s3://$s3_dbs_bucket $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
+  aws s3 sync $mysql_output s3://$s3_dbs_bucket $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
 fi
 echo $? >> $scriptpath/$exitcodes
 echo "========================================" >> $scriptpath/$logfile
@@ -59,7 +59,6 @@ fi
 echo $? >> $scriptpath/$exitcodes
 
 # Check if any errors happened during creating and synchronizing backups
-#errors=0; for i in `grep -Ev '(^0|^$)' $scriptpath/$exitcodes | uniq -c | awk '{printf "%s\n", $1}'`; do errors=$(($errors + $i)); done
 errorcount="$(grep -Ev '(^0|^$)' $scriptpath/$exitcodes|wc -l)"
 
 # Send the report
