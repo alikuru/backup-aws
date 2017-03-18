@@ -13,6 +13,11 @@ scriptpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 logfile="backup-$(hostname)-$suffix.log"
 exitcodes="exit-codes.log"
 
+# If it doesn't exist, create the directory for storing database dumps
+if [ ! -d "$mysql_output" ]; then
+  mkdir -p $mysql_output
+fi
+
 # Dump all databeses and create arcives.
 # We skip databases with names starting with an underscrore. Also, we prefer not to dump "information_schema".
 databases=`mysql --user=$mysql_user --password=$mysql_password -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
@@ -72,7 +77,7 @@ echo "{\"Data\": \"X-SES-SOURCE-ARN: $mail_header_source_arn\nX-SES-FROM-ARN: $m
 aws ses send-raw-email --raw-message file://$scriptpath/mail.json
 
 # Set trap for cleanup
-function cleanup {
-  rm $scriptpath/$logfile $scriptpath/$exitcodes $scriptpath/mail.json
-}
-trap cleanup EXIT
+# function cleanup {
+#   rm $scriptpath/$logfile $scriptpath/$exitcodes $scriptpath/mail.json
+# }
+# trap cleanup EXIT
