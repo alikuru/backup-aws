@@ -7,6 +7,10 @@ mail_to="System Administrator <admin@domain.tld>"
 mail_return="Web Server <server@domain.tld>"
 
 # MySQL settings
+# Use your root account credentials if you want to back all your databeses.
+# If you use an account other than root, you will only be able to backup databeses accessible to that particular user.
+# mysql_output is the target directory for mysql dumps, it will hold archives for all dbs with rotating 7 days back.
+# You can use $scriptpath and $HOME parameters while setting mysql_output. It's probably best if you use an absolute path.
 mysql_user="root"
 mysql_password="my-very-strong-password"
 mysql_output="./dbs"
@@ -15,7 +19,11 @@ mysql_output="./dbs"
 root_vhosts="/path/to/vhosts/root/"
 
 # s3 settings
-s3_sync_params="--no-follow-symlinks --exact-timestamps --delete --dryrun"
+# You might want to add --dryrun to s3_sync_params if you want a test run before sending your backups to S3.
+# If you want to backup your dbs and vhosts to the same bucket, put its name to both s3_bucket_vhosts & s3_bucket_dbs.
+# It's best if you exclude at least your S3 log directory with s3_sync_exclude, if you have enabled logging on your buckets
+# and using --delete parameter at s3_sync_params. Otherwise your S3 logs will be deleted with every sync.
+s3_sync_params="--no-follow-symlinks --exact-timestamps --delete"
 s3_bucket_vhosts="my-vhosts-bucket"
 s3_bucket_dbs="my-dbs-bucket"
 s3_sync_exclude="logs-aws/*"
