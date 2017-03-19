@@ -1,9 +1,7 @@
 #!/bin/bash
-# Import settings from config file
-source settings.conf
 
 # Export AWS CLI path
-export PATH=~/.local/bin:$PATH
+export PATH=$HOME/.local/bin:$PATH
 
 # Get date for tagging backups.
 suffix=$(date +"%Y%m%d")
@@ -15,6 +13,9 @@ rotate=$(date +"%Y%m%d" -d "-7days")
 scriptpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 logfile="backup-$(hostname)-$suffix.log"
 exitcodes="exit-codes.log"
+
+# Import settings from config file
+source $scriptpath/settings.conf
 
 # If it doesn't exist, create the directory for storing database dumps as defined in settings.
 if [[ ! -d "$mysql_output" ]]; then
