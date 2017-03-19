@@ -17,7 +17,7 @@ logfile="backup-$(hostname)-$suffix.log"
 exitcodes="exit-codes.log"
 
 # If it doesn't exist, create the directory for storing database dumps as defined in settings.
-if [ ! -d "$mysql_output" ]; then
+if [[ ! -d "$mysql_output" ]]; then
   mkdir -p $mysql_output
 fi
 
@@ -45,7 +45,7 @@ rm $mysql_output/*.sql $mysql_output/*.tar
 echo "========================================" >> $scriptpath/$logfile
 echo "Synchronizing databases" >> $scriptpath/$logfile
 echo "========================================" >> $scriptpath/$logfile
-if [ -z ${s3_sync_exclude+x} ]; then
+if [[ -z ${s3_sync_exclude+x} ]]; then
   aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
 else
   aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
@@ -54,7 +54,7 @@ echo $? >> $scriptpath/$exitcodes
 echo "========================================" >> $scriptpath/$logfile
 echo "Synchronizing virtual hosts" >> $scriptpath/$logfile
 echo "========================================" >> $scriptpath/$logfile
-if [ -z ${s3_sync_exclude+x} ]; then
+if [[ -z ${s3_sync_exclude+x} ]]; then
   aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params >> $scriptpath/$logfile
 else
   aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
