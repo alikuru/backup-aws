@@ -6,7 +6,7 @@ It basically finds every database hosted on your MySQL (or drop-in replacements 
 Though it can be triggered manually, the script is designed to run as a daily cron job. If you don't want a particular database to be dumped synchronized every day, put an underscrore in the beginning of its name and it will be excluded. You can also exclude directories from your webroot. Again, please check [settings.conf.sample](settings.conf.sample) for details.
 
 ### Usage
-- Clone the repo to your server, whereever you like. Preferably at `/root/`.
+- Clone the repo to your server, wherever you like. Preferably at `/root/`.
 - Copy [settings.conf.sample](settings.conf.sample) to `settings.conf` at the script directory and edit it with your credentials and preferences.
 - Set a daily cron and if everything works, you'll start receiving daily backup reports.
 
