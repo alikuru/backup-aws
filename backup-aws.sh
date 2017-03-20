@@ -73,7 +73,7 @@ echo "{\"Data\": \"X-SES-SOURCE-ARN: $mail_header_source_arn\nX-SES-FROM-ARN: $m
 
 aws ses send-raw-email --raw-message file://$scriptpath/mail.json
 
-Set trap for cleanup
+# Set trap for cleanup
 function cleanup {
   rm $scriptpath/$logfile $scriptpath/$exitcodes $scriptpath/mail.json
 }
