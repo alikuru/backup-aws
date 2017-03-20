@@ -28,9 +28,7 @@ databases=`mysql --user=$mysql_user --password=$mysql_password -e "SHOW DATABASE
 echo $? >> $scriptpath/$exitcodes
 for db in $databases; do
   if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
-    echo "========================================" >> $scriptpath/$logfile
-    echo "Dumping database: $db" >> $scriptpath/$logfile
-    echo "========================================" >> $scriptpath/$logfile
+    echo -e "========================================\nDumping database: $db\n========================================" >> $scriptpath/$logfile
     mysqldump --force --opt --add-drop-table --log-error=$scriptpath/$logfile --user=$mysql_user --password=$mysql_password --databases $db > $mysql_output/$db.$suffix.sql
     echo $? >> $scriptpath/$exitcodes
     tar cfv $mysql_output/$db.$suffix.sql.tar -C $mysql_output $db.$suffix.sql
@@ -43,18 +41,14 @@ done
 rm $mysql_output/*.sql $mysql_output/*.tar
 
 # Sync all local assets with remote.
-echo "========================================" >> $scriptpath/$logfile
-echo "Synchronizing databases" >> $scriptpath/$logfile
-echo "========================================" >> $scriptpath/$logfile
+echo -e "========================================\nSynchronizing databases\n========================================" >> $scriptpath/$logfile
 if [[ -z ${s3_sync_exclude+x} ]]; then
   aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
 else
   aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
 fi
 echo $? >> $scriptpath/$exitcodes
-echo "========================================" >> $scriptpath/$logfile
-echo "Synchronizing virtual hosts" >> $scriptpath/$logfile
-echo "========================================" >> $scriptpath/$logfile
+echo -e "========================================\nSynchronizing virtual hosts\n========================================" >> $scriptpath/$logfile
 if [[ -z ${s3_sync_exclude+x} ]]; then
   aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params >> $scriptpath/$logfile
 else
