@@ -1,35 +1,52 @@
 #!/bin/bash
 
-# Export AWS CLI path
-export PATH=$HOME/.local/bin:$PATH
-
-# Get date for tagging backups.
-suffix=$(date +"%Y%m%d")
-
-# Mark the date for deleting the database backup taken given number of days before today.
-rotate=$(date +"%Y%m%d" -d "-7days")
-
-# Set path and logging details
+# Set script path
 scriptpath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-logfile="backup-$(hostname)-$suffix.log"
-exitcodes="exit-codes.log"
 
 # Import settings from config file
 if [[ -f $scriptpath/settings.conf ]]; then
 
   source $scriptpath/settings.conf
 
+  # Export AWS CLI path
+  export PATH=$HOME/.local/bin:$PATH
+
+  # Get date for tagging backups.
+  suffix=$(date +"%Y%m%d")
+
+  # Set logging details
+  logfile="backup-$(hostname)-$suffix.log"
+  exitcodes="exit-codes.log"
+
+  # Mark the date for deleting the database backup taken given number of days before today.
+  rotate=$(date +"%Y%m%d" -d "-$mysql_days days")
+
   # If it doesn't exist, create the directory for storing database dumps as defined in settings.
   if [[ ! -d "$mysql_output" ]]; then
     mkdir -p $mysql_output
   fi
 
+  # Skip databases set to be excluded in the settings.conf file.
+  excluded_dbs=( $mysql_exclude )
+  function excludeDBs()
+  {
+    local is_db_excluded="false"
+    for xdb in "${excluded_dbs[@]}"
+    do
+        if [ "$1" == "${xdb}" ]; then
+            is_db_excluded="true"
+            break
+        fi
+    done
+
+    echo "$is_db_excluded"
+  }
+
   # Dump all databeses and create arcives.
-  # Skip databases with names starting with an underscrore. Also, prefer not to dump "information_schema".
   databases=`mysql --user=$mysql_user --password=$mysql_password -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
   echo $? >> $scriptpath/$exitcodes
   for db in $databases; do
-    if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
+    if [[ $(excludeDBs "$db") == "false" ]]; then
       echo -e "========================================\nDumping database: $db\n========================================" >> $scriptpath/$logfile
       mysqldump --force --opt --add-drop-table --log-error=$scriptpath/$logfile --user=$mysql_user --password=$mysql_password --databases $db > $mysql_output/$db.$suffix.sql
       echo $? >> $scriptpath/$exitcodes
@@ -40,15 +57,11 @@ if [[ -f $scriptpath/settings.conf ]]; then
       rm $mysql_output/$db.$rotate.tar.7z
     fi
   done
-  rm $mysql_output/*.sql $mysql_output/*.tar
+  rm $mysql_output/*.{sql,tar}
 
   # Sync all local assets with remote.
   echo -e "========================================\nSynchronizing databases\n========================================" >> $scriptpath/$logfile
-  if [[ -z ${s3_sync_exclude+x} ]]; then
-    aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
-  else
-    aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
-  fi
+  aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
   echo $? >> $scriptpath/$exitcodes
   echo -e "========================================\nSynchronizing virtual hosts\n========================================" >> $scriptpath/$logfile
   if [[ -z ${s3_sync_exclude+x} ]]; then
