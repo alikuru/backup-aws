@@ -5,7 +5,5 @@ settings.conf
 dbs/
 
 # Avoid accidental inclusion of possible leftovers of premature exits.
-error-*
-backup-*
-exit-codes.log
+*.log
 mail.json
