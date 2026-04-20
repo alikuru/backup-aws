@@ -64,12 +64,29 @@ if [[ -f $scriptpath/settings.conf ]]; then
   aws s3 sync $mysql_output s3://$s3_bucket_dbs $s3_sync_params >> $scriptpath/$logfile
   echo $? >> $scriptpath/$exitcodes
   echo -e "========================================\nSynchronizing virtual hosts\n========================================" >> $scriptpath/$logfile
-  if [[ -z ${s3_sync_exclude+x} ]]; then
-    aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params >> $scriptpath/$logfile
-  else
-    aws s3 sync $root_vhosts s3://$s3_bucket_vhosts $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
-  fi
-  echo $? >> $scriptpath/$exitcodes
+
+  function sync_vhost() {
+    local src="$1"
+    local dst="$2"
+    if [[ -z ${s3_sync_exclude+x} ]]; then
+      aws s3 sync "$src" "$dst" $s3_sync_params >> $scriptpath/$logfile
+    else
+      aws s3 sync "$src" "$dst" $s3_sync_params --exclude "$s3_sync_exclude" >> $scriptpath/$logfile
+    fi
+    echo $? >> $scriptpath/$exitcodes
+  }
+
+  IFS=',' read -ra vhost_locations <<< "$root_vhosts"
+  for location in "${vhost_locations[@]}"; do
+    if [[ "$location" == */ ]]; then
+      for vhost_dir in "$location"*/; do
+        [[ -d "$vhost_dir" ]] || continue
+        sync_vhost "$vhost_dir" "s3://$s3_bucket_vhosts/$(basename $vhost_dir)"
+      done
+    else
+      sync_vhost "$location" "s3://$s3_bucket_vhosts/$(basename $location)"
+    fi
+  done
 
   # Check if any errors happened during creating and synchronizing backups.
   errorcount="$(grep -Ev '(^0|^$)' $scriptpath/$exitcodes|wc -l)"

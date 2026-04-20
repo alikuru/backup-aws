@@ -19,7 +19,10 @@ mysql_output="./dbs"
 mysql_exclude="information_schema mysql performance_schema sys"
 mysql_days=7
 
-# Root directory of vhosts
+# Virtual host locations (comma-separated).
+# A trailing slash means every subdirectory under that path is backed up individually.
+# No trailing slash means only that directory itself is backed up.
+# Example: root_vhosts="/path/to/multiple/vhosts/root/,/path/to/single/vhost"
 root_vhosts="/path/to/vhosts/root/"
 
 # s3 settings
